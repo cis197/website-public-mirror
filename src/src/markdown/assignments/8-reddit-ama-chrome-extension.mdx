@@ -1,0 +1,187 @@
+---
+path: '/assignments/8'
+date: '2020-01-19'
+due: '2020-03-11'
+title: 'Homework 8: Reddit AMA Chrome Extension'
+hidden: true
+---
+
+## Before Starting on this Assignment
+
+Review [Lecture 9](/lectures/9). You may also want to check out the [sample code from lecture](https://github.com/sibnerian/example-extension).
+
+Review notes on jQuery and DOM manipulation if needed. Also if needed check out Chrome's [Getting Started](https://developer.chrome.com/extensions/getstarted).
+
+While this may seem obvious, **YOU MUST HAVE CHROME**.
+
+## Our Chrome Extension
+
+Chrome extensions are built with the same tools as websites: HTML, CSS, and Javascript.
+
+We'll be making an extension that runs on IAmA Reddit posts and hides all
+comment chains that don't include a comment by the original poster (OP). If you
+are unfamiliar with IAmA's you can check out their structure with
+[Bill Gate's IAmA](http://www.reddit.com/r/IAmA/comments/18bhme/im_bill_gates_cochair_of_the_bill_melinda_gates/), [Arnold Schwarzenegger's](http://www.reddit.com/r/IAmA/comments/16mq0g/iamarnold_ask_me_anything/), or [the President's](http://www.reddit.com/r/IAmA/comments/z1c9z/i_am_barack_obama_president_of_the_united_states/). The intent is to reduce the noise and focus on the questions that the OP has answered. The end product will also allow the user to make some small configurations.
+
+The end product should function as follows:
+
+- when an IAmA loads, all unanswered comment chains should be hidden (the filtering initially applies only to the OP).
+- the mechanism to hide the comments should **only** apply to IAmA pages (http://www.reddit.com/r/IAmA/comments/blah_blah_blah).
+- the extension icon should provide a popup with:
+  - a button to apply the comment filtering
+  - a button to remove the comment filtering
+  - a text input that determines which username to filter by
+
+This homework will be mostly in small steps, and it would be prudent not to jump around.
+
+### Loading Your Extension
+
+To actually use your extension in Chrome, you first have to load it. Go to the
+Extensions page (chrome://extensions/) and check Developer Mode in the top
+right corner. Click Load Unpacked Extensions and find the homework directory.
+Make sure the extension is enabled. Whenever you change any of the source
+files, you need to return to this page and reload the extension before the
+changes take affect.
+
+---
+
+## The Manifest File
+
+Every chrome extension needs a _manifest file_ to declare its meta-information.
+
+This is in the form of a JSON file `manifest.json`, that has the structure:
+
+```js
+{
+    "manifest_version": 2,
+
+    "name": "IAmA Parser",
+    "description": "Removes all comment chains from Reddit post without OP",
+
+    "version": "1.0",
+
+    "background": {
+        "scripts": [ "background.js" ],
+        "persistent": false
+    },
+
+    "permissions": [
+        // Your permissions here, e.g. declarativeContent
+    ],
+
+    ...
+}
+```
+
+**TODO**: The permissions array declares what resources or APIs your app can use. You should begin by adding in the `declarativeContent` permission which is used in `background.js` to add the extension icon on the right pages.
+
+As we continue you will add new elements to the manifest as well.
+
+---
+
+## Enabling Content Scripts
+
+#### **`manifest.json`**
+
+In order to inject JavaScript into a page as it loads, we must use content scripts. Content scripts can be JavaScript or CSS and are declared in the manifest file. You will inject two JavaScript files (`comment-parser.js`, `main.js`. `jquery.min.js`) and one CSS file (`parse.css`). We have provided `parse.css` and `main.js` which you should quickly look over (both are only a couple lines) and jQuery. These must all be declared in the manifest as follows:
+
+```json
+"content_scripts": [
+    {
+        "matches": [ "..." ],
+        "css": [ "..." ],
+        "js": [ "..." ]
+    }
+],
+```
+
+The `css` and `js` arrays should have the paths to the content script files, and `matches` is an array of URLs in which the scripts should be injected. For example, `"http://www.facebook.com/*"` would be all sites with the Facebook domain _only over HTTP_. `"http://www.facebook.com/messages/*"` would match anything on Facebook that had a path starting with `/messages/`.
+
+**TODO**: You'll need to write some matches for `www.reddit.com`. Keep in mind that the only paths you're interested in start with `/r/IAmA/comments/` - we're only filtering comment chains in /r/IAmA. **Be sure to include both 'http' and 'https' versions for your matches.**
+
+Once you have added these, the next step is to actually write the JavaScript!
+
+---
+
+## Parsing Comments
+
+#### **`content_scripts/comment-parser.js`**
+
+To implement this extention we will **not** be using the Reddit API, but instead will be _adding classes to the elements in the page_. The Reddit DOM is a bit odd (lots of divs have the class 'thing' for some reason?), so the work to find the comments and OP name is done in `main.js` (which is provided). You will be writing the CommentParser which takes in its constructor a jQuery object that has all top level comment chains and the OP username as a string. You will implement two functions for CommentParser: parse, and filter.
+
+**TODO**: Implement parse.
+
+Parse should take a username (String) as a parameter and apply the classes `answered-chain` and `unanswered-chain` to each top level comment based on whether the username shows up in the chain. Note that only one of these classes should ever be applied to a top level comment at a time!
+
+Also of note, the parse function should be desgined to be idempotent. This means calling it repeatedly with the same author argument should always yield the same overall result, and calling it with a new author argument should yield a result as if previous parse calls we never made.
+
+Usernames appear in links with the `author` class, and it is sufficient to simply _find_ all authors within a top level comment. If you have any trouble with this part, we would encourage you to inspect an IAmA's DOM manually yourself with the Chrome console. _If an empty string or no username is given to the parse function_, parse using the OP's username as the default. Parse should also turn on the filtering.
+
+Finally, parse should call `this.filter(true)` so that whenever a new username is parsed, comment chains without that username are immediately filtered.
+
+**TODO**: Implement filter.
+
+Filter should take in a boolean indicating whether unanswered chains should be filtered, and appropriately toggle the visibility of `unanswered-chain`s. I.e. when the page first loads, `filter(true)` will be called in the parse method, and all unanswered chains should be hidden; if `filter(false)` is subsequently called they should be shown. This should not change any classes; rather, you should use `$topLevelComment.css('display', 'block')` to show comments, and `$topLevelComment.css('display', none')` to hide comments.
+
+Please make sure you use prototypal inheritance when adding these functions to the CommentParser. If you need a refresher on how to add functions prototypically, see [the lecture slides](lectures/lecture2.html#18) on the subject.
+
+To test this part, just run the extension on an IAmA page - `content-parser.js` should be loaded thanks to our manifest file. Any console logging done in CommentParser will go to the page's console.
+
+---
+
+## Creating the Popup
+
+#### **`popup/popup.js`**
+
+Once you have gotten the extension to successfully hide comment chains without an OP answer, its time to create a popup in order to toggle the visibility of these comments. The popup is simply an HTML document that has been given to you. In order for this HTML file to be used as a the popup, it must be declared in the manifest:
+
+```json
+"page_action": {
+  "default_popup": "popup/popup.html",
+  "default_icon": "popup/icon.png",
+  "default_title": "IAmA Parser"
+}
+```
+
+Also add the background script which we have provided for you:
+
+```json
+"background": {
+  "scripts": [ "background.js" ],
+  "persistent": false
+},
+```
+
+Reload the extension. You should now see an icon on the right end of the URL that should show a popup when clicked. This icon should only show up for IAmA pages -- this is done in `background.js`, which you should check out (but don't need to edit).
+
+**TODO:** Implement `popup.js`.
+
+Next, we'll add functionality to the input in the popup. When the 'REMOVE FILTER' button is pressed, the unanswered chains should show up (`window.parser.filter(false)`); when the 'APPLY FILTER' button is pressed, the unanswered chains should be hidden (with a call to `window.parser.filter(true)`. For testing purposes, be sure that you use a `click` event listener for these. When a username is entered into the text input, the comments should be hidden based on which chains that username has been in - you'll want to call `window.parser.parse(new_username)`. For the text input, listen for the `keydown` event. _If you listen for the wrong events, you'll fail our tests even if things "work," so please be careful._
+
+Note that any jQuery selecting done in `popup.js` will only search popup.html.In order to run JS in the IAmA tab itself, the Chrome tab's executeScript must be used. You can find the full documentation on that [here](https://developer.chrome.com/extensions/tabs#method-executeScript). Here are a few things to note, however:
+
+- The first parameter, `tabId`, is optional, and you won't need it - the default is the active tab of the current window.
+- Your second parameter should just be a plain object with a 'code' property that specifies the code to run in the Reddit window (hint - you wrote a filter function earlier in this assignment).
+- The third parameter, `callback`, is also optional - you won't need it.
+
+This will require another permission -- the `activeTab` permission -- so be sure to add this to the manifest.
+
+Now, everything should be working! You should be able to reload your extension and cruise around [reddit.com/r/IAmA](http://www.reddit.com/r/IAmA/), filtering the comment chains as you wish.
+
+---
+
+## Submitting
+
+Run `npm run lint` to make sure you have no linter errors before submitting.
+
+Now that you're done, make sure that everything works locally (and complies to
+this specification) before submitting to Gradescope.
+
+In order to submit, run the following command and submit the resulting zip
+file:
+
+```text
+zip -r files.zip content_scripts/comment-parser.js manifest.json popup/popup.js
+```
+
+**NOTE:** this won't work if you use a name other than `files.zip`!

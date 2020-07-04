@@ -1,0 +1,234 @@
+---
+path: '/assignments/react-comment-app'
+date: '2020-02-21'
+due: '2020-03-03'
+title: 'Homework 6: React Comment App'
+hidden: false
+hasZip: false
+---
+
+import { InfoMessage, ErrorMessage, Code, BtnAnchor } from '../../components'
+
+<InfoMessage showIcon>
+  {`This assignment doesn't have any tests. We outline the functionality we are
+  looking for at the bottom of this writeup. After this one, we will (actually
+  this time) be going back to automated tests again 🥺`}
+</InfoMessage>
+
+Note that there's no zipped implementation stub for this assignment. That's because you're going to be totally building the app yourself! This might seem a little horrifying, but hopefully last lecture will prove useful in preparing you for this.
+
+<BtnAnchor
+  href="https://github.com/cis197/live-code/tree/master/S2020/lecture7"
+  target="_BLANK"
+>
+  Code from last lecture
+</BtnAnchor>
+
+---
+
+### Final Product
+
+We want you to build an app with the following _functionality_. By that we mean you by no means need to style the app to this extent, we just care about the things we outline in the rubric. If you want to build out additional functionality or styles beyond what we mention, go for it!
+
+<BtnAnchor href="https://197-react-community.netlify.com/" target="_BLANK">
+  Example app
+</BtnAnchor>
+
+In gif form:
+
+![demo](https://cis-197.s3.amazonaws.com/cis-197-react-comments-demo.gif)
+
+---
+
+### Recommendations
+
+Be organized. Split things into helper files and small components. If you put everything in just a couple files, it can be really hard to debug and you'll lose style points.
+
+For example, we can have one component for handling upvotes and downvotes, and we can call it `Voter.jsx`. Since the state in this app is all local, we don't need to even pass this component any props, it just maintains it's own `voteCount` state which starts out at zero and gets incremented and decremeneted depending on if users click upvote or downvote.
+
+Components can render themselves. For example, if we have a `Reply.js` component, that component can have a recursive render function where it returns a new instance of itself in cases where there is a reply to a reply.
+
+---
+
+### User requirements
+
+- As a user, I should be able to create a new post
+  - I should not be able to create a post without entering my name and text (the button should not work)
+- As a user, I should be able to reply to a post, also with my name and text
+  - I should not be able to reply without providing my name and text
+  - As a user, I can leave any number of replies to a post at a given depth
+  - I should not be able to reply _beyond_ three levels of depth (for example, if we had original post → first reply → reply to reply, I could not write a reply to reply to reply)
+- As a user, I should be able to upvote or downvote any post any number of times
+
+**Note:** none of the state is persistent. There is no database or API. If we refresh the page, there is nothing which persists.
+
+---
+
+### Technical requirements
+
+- Use parcel to bundle your app
+- Write your app in React
+- Render the app to the DOM with ReactDOM
+- No errors in the developer tools console when clicking through the app
+- Deploy the app to a service like [Heroku](https://heroku.com), [Netlify](https://www.netlify.com/), or [GitHub pages](https://pages.github.com/)
+- Maintain state either in functional React components via React Hooks or in class components via `this.setState` and related functions
+- Use the same form component for creating a post and creating a reply
+- Use the same upvote/downvote component for voting on posts and on replies to posts
+- Set up and use [eslint](https://eslint.org/) (feel free to use any configuration you want or to adapt one from a previous homework)
+
+---
+
+### Basic setup
+
+We'll walk you through basic setup with Parcel + React.
+
+Create a new folder somewhere on your computer, name it whatever you want, and open it in your IDE (like VSCode).
+
+Then, from within the folder, run `git init`. This initializes the folder to be a git repository, so that you can "push" your code to Github for us to see. 
+
+Run `npm init -y`—this command initializes your folder to be an npm project. You'll see that you should now have a `package.json` file. Now, you are able to run `npm install [package_name]` commands and install packages.
+
+`npm install react react-dom parcel-bundler` will install React (frontend framework), React-DOM (binds react elements to DOM elements), and Parcel (takes ES6 code and converts it into ES2015 code that the browser can understand).
+
+Create a file called `index.html` in the root of your project and add the following contents to it
+<Code
+  code={`
+<html>
+  <body>
+    <div id="react-root"></div>
+    <script src="./index.js"></script>
+  </body>
+</html>`}
+  language="html"
+/>
+
+Create a file called `App.js` in the root of your project and add the following contents to it
+<Code
+code={`
+export const App = () => {
+  return (
+    <h1>Your react app!</h1>
+  )
+}`}
+lang="jsx"
+/>
+
+
+Create a file called `index.js` in the root of your project and add the following contents to it
+
+
+<Code
+code={`
+import React from 'react'
+import ReactDOM from 'react-dom'
+import App from './App'
+ 
+ReactDOM.render(<App/>, document.getElementById('react-root'))
+`} lang="jsx" />
+
+Then, add the following to your `package.json` file:
+<Code code={`
+"scripts": {
+  "start": "parcel index.html"
+}`} lang="json" />
+
+Now, when you run `npm start`, you'll see that Parcel actually starts bundling + serving your React application. You should be able to access it at `https://localhost:1234`.
+
+To see where we're getting all this info from, look at [this link](https://parceljs.org/recipes.html).
+
+
+---
+
+### Example components
+
+#### Components that take user data
+This component shows you how to take user input and store in state. Similarly, buttons have `onPress` props.
+
+<Code code={`
+import React, { useState, useEffect } from 'react'
+ 
+export default () => {
+  const [userInput, changeUserInput] = useState('')
+  return (
+    <input type="text" value={userInput} onChange={e => changeUserInput(e.target.value)} />
+  )
+}`} lang="jsx" />
+
+
+#### Recursively Rendered Components
+The component that captures post text and the author might need to be recursively rendered. Here's an example of a recursively rendered component.
+
+<Code code={`
+export const RecursivelyRenderedComponent = ({depth}) => {
+  if (depth === 0) {
+    // Base case
+    return null
+  }
+  
+  return (
+    <>
+      <h1>Depth: {depth}</h1>
+      <RecursivelyRenderedComponent depth={depth - 1} />
+    </>
+  )
+}
+`} lang="jsx" />
+
+---
+
+### Extra stuff
+
+Feel free to use libraries like [Tailwind CSS](https://tailwindcss.com/), [Bulma](https://bulma.io/), or [Bootstrap](https://getbootstrap.com/) for helping in styling your app if you want to. Parcel also plays really well with different CSS-related tools like [styled-components](https://styled-components.com/) (a Cameron Cabo favorite) or [scss](https://sass-lang.com/). Feel free to play around with these (again, this is not required)!
+
+---
+
+### Deploying with Netlify
+
+You can host this app wherever you want so long as there's a link we can visit it at. Netlify is one super easy way to deploy:
+
+1. Create a Netlify account
+1. Click the button to create a new website
+1. Give it access to your GitHub account and pick the repo where you are pushing your code
+1. Set the build command to `npm run build`
+1. Set the publish directory to `dist`
+1. Hopefully it builds and deploys without any issue. If it doesn't, Netlify's error messages can be pretty useful
+1. If configured correctly, every push to the master branch will automatically trigger a re-build of the site
+
+---
+
+
+### What to submit
+
+On Gradescope:
+
+1. Link to a GitHub repository containing your code
+1. Link to where your app is hosted in production
+1. Text file enumerating any sources which helped you in writing this app (for example, stackoverflow posts)
+
+---
+
+### Grading
+
+We will manually grade these submissions per the user and technical criteria outined above. As per usual, there will also be 5 points for eslint and 5 points for style.
+
+---
+
+### Disclaimer
+
+This is a very free-form assignment and we recognize it's going to be tough for some people. If you have any questions about how you might do something, ask on Campuswire or in office hours and the TA's will try to be particularly helpful in pointing you in the right direction for this assignment.
+
+<ErrorMessage showIcon>
+  <p>
+    <u>
+      <strong>Note:</strong> do not copy code from the internet.
+    </u>{' '}
+    You are welcome to search around and see how people go about building apps
+    like this, but you cannot adapt any code you find online.
+  </p>
+  <p>
+    The TA's are good at detecting when code is not genuine, and this will
+    significantly damage your standing in the course. You will get a lot out of
+    this assignment from a learning point of view if you do it on your own and
+    take the time to really understand the technologies.
+  </p>
+</ErrorMessage>

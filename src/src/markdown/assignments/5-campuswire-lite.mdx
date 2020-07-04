@@ -1,0 +1,701 @@
+---
+path: '/assignments/campuswire-lite'
+date: '2020-02-13'
+due: '2020-02-20'
+title: 'Homework 5: Campuswire Lite'
+hidden: false
+---
+
+import { Code, WarningMessage, ErrorMessage } from '../../components'
+
+# HW5 Campuswire Lite
+
+To clarify, this assignment doesn't have any tests. Once again, we are just looking for functionality. After this one, we'll be going back to tests again :(
+
+<InfoMessage showIcon>
+  {`This assignment doesn't have any tests. We outline the functionality we are
+  looking for at the bottom of this writeup. After this one, we'll be going back
+  to automated tests again.`}
+</InfoMessage>
+
+## Final Product
+
+![final product](https://user-images.githubusercontent.com/47411373/74400797-2addfa80-4ded-11ea-8635-71f11d9bc7cc.gif)
+
+Our final application will be a really pared down version of Campuswire ("pared down" is an understatement) that allows you to list out a bunch of questions that only registered users have submitted. That being said
+there is also a signup/login portion of this website with a persistent database.
+
+With that idea in mind, let's dive in.
+
+### Server.js
+
+First off, this application will be an express application.
+However, lucky for you, we've already added all the dependencies needed to your package.json, so all you'll need to do is `npm install` and your bootiful computer will install all the necessary dependencies into your project.
+
+In this homework, we are using `express` as the server and at the top of the file, you can see that we have already included the line `var app = express()`. This instantiates the server for us.
+
+As for the place to store the questions and users, we are going to use MongoDB. `mongoose.connect(...)` , as you may notice, connects the app to a local mongoDB.
+
+> For information about how to install mongoDB, refer to this [link](https://docs.mongodb.com/manual/installation/#mongodb-community-edition-installation-tutorials) (We only need the community Edition) \
+> For information about running mongoDB, refer to this [link](https://docs.mongodb.com/manual/tutorial/manage-mongodb-processes/)\
+> You may also want to install [Robo3T](https://robomongo.org/) to visualize your MongoDB. Hit Download Robo 3T only and this should bring you to the download link
+
+Recall from class that whenever we want to custom render some information, we need to use a templating engine. In this case, we are using [Handlebars](https://handlebarsjs.com/). `app.engine(...)` specifies a view engine and `app.set(...)` sets the view engine to the one we have already specified.
+
+We've set up a couple of routes for you. `app.get('/', ...)` and `app.post('/', ...)`. Those are there for you to handle requests that happen on the base url itself (in our case, localhost).
+
+We've also set up an `app.listen` call that specifies our application listens on port process.env.PORT or port 3000. Since we haven't set process.env.PORT on our command line it will default over to port 3000.
+
+Note that we've already provided you with some html pages within `views/`. In that file, there is an `index.hbs` page that will eventually contain some Handlebars rendering logic. (`hbs` is the extension name for handlebars files)
+
+<Code
+  js
+  code={`
+Question.find({}, function(err, result) {
+  if (err) {
+    return next(err)
+  }
+  res.render('index', {
+    questions: result,
+    layout: false,
+  })
+})
+`}
+/>
+
+Which basically allows us to render this HTML page on the server side.
+
+If you check in the requirements we imported at the top of the `server.js` code, we can see that `Question` is supposed to represent the model we've defined in a separate file called `question.js`, and this is related to the `mongoose.connect(...)` that we told you to comment out earlier. What this is supposed to represent is a _schema_, or some kind of framework/model that we use in order to represent things in our real world, like so in `/models/question.js`:
+
+<Code
+  js
+  code={`
+var questionSchema = new mongoose.Schema({
+  questionText: { type: String },
+  ...
+})
+`}
+/>
+
+And, in general, we work with these schemas to represent things such as users (as we will later in this assignment) as well as other things, such as questions in this case.
+
+Similarly, for Add Question on the POST `/` route, we have that:
+
+<Code
+  js
+  code={`
+var questionText = req.body.question
+var q = new Question({ questionText: questionText })
+q.save(function(err) {
+  if (!err) {
+    res.redirect('/')
+  } else {
+    next(err)
+  }
+})
+`}
+/>
+
+Where we can see that we instantiate a new instance of this model `Question` that has properties we can assign to it. All that `.save()` does in the code is then save this newly instantiated object to whatever database we have. And, if we have a successful save (i.e. no errors), then we redirect the users back to the root directory with `res.redirect('/')`.
+
+### Error Handling:
+
+Any time we want to handle errors, we always just send back to the user a `res.send('whatever the error message is here')` however, that just leads to a bunch of repetitive calls to handle error logic. How about we have a simple function that just handles any error that comes by us and displays that error. We can use a middleware for this as well...
+
+If you notice, there are a few lines at the bottom of `server.js`
+
+<Code
+  js
+  code={`
+app.use(function(err, req, res, next) {
+  return res.send('ERROR :  ' + err.message)
+})
+`}
+/>
+
+This is actually a middleware. It isn't as formally defined as our `isAuthenticated` middleware, _but_ it is still middleware regardless (for those who are curious, any time you do `app.use` something, it is pretty much a middleware or router). Note that since this is at the bottom of the server.js file, it is a function that gets executed after all other requests have been processed (i.e. there's nothing after this).
+
+This middleware has an additional parameter, `err` that accepts any errors that are passed into this function and then just send back to the user `'ERROR: ' + err.message`
+
+But how do we get errors to be passed to this middleware? You may initially be tempted to just throw errors in our route handlers
+
+<Code
+  js
+  code={`
+app.get('/bleh', function(req, res, next) {
+  // something  went wrong
+  throw new Error('ERROR')
+})
+`}
+/>
+
+However, when this actually throws an error in the express process itself and causes the server to quit. This isn't quite what we want (rather we just want to display the error to the user).
+
+So to do so, we take advantage of the `next` parameter we've been appending to our route handlers.
+
+Whenever we want to throw an error, we should just call `next(new Error('error message'))` in a route handler. This error will propagate down into any subsequent handlers until we hit our last middleware (the one at the bottom of server.js).
+
+An example of this is as follows:
+
+<Code
+  js
+  code={`
+app.get('/', function(req, res, next) {
+  console.log(req.session.user)
+  var questionDb = Question.find({}, function(err, results) {
+    if (!err) {
+      res.render('index', { questions: results, user: req.session.user })
+    } else {
+      next(err) // we just pass in the error from the db call
+    }
+  })
+})
+`}
+/>
+
+Luckily for you guys, for any prior errors that were `res.send`'ed, we've already gone ahead and converted those `res.send` calls to the appropriate `next(...)` calls. Now, any errors that do catch will immediately flow down to our error-catching middleware at the bottom.
+
+### Routers
+
+**TODO:**
+
+- set up the skeletons for `GET/POST signup`, `GET/POST login`, `GET logout` routes
+- import routes in `routes/account.js` into `server.js
+`
+
+So far, we've been clumping all of our routes together into a single `server.js` file and, while that is fine for this application, it can get out of hand really quickly.
+
+Routers are a feature built into express that allows us to group together all routes that handle a specific subset of features under the same url prefix.
+
+So for example: in our application, we need 5 routes (`GET/POST signup`, `GET/POST login`, `GET logout`) dedicated to account management type things...we should probably segment those routes off into their own little file.
+
+To do so, open up `routes/account.js` and notice the first two lines of that file.
+
+<Code
+  js
+  code={`
+var express = require('express')
+var router = express.Router()
+`}
+/>
+
+These lines instantiate a new express Router.
+
+Before the `module.exports` line, just put in all of the 5 routes dedicated to account management mentioned above. Note that you are most likely going to need to edit and add more require statements (notably you'll need to require the `User` model in this file). Also note that you will have to replace `app.whatever(...)` with `router.whatever(...)`.
+
+As an example, if you want to implement `GET signup` route, you may want to do the following
+
+<Code
+  js
+  code={`
+router.get('/signup', function(req, res) {
+  ...
+})
+`}
+/>
+
+As you can see, the syntax is actually similar to those routes we have provided in `server.js`. You only need to replace `app.get` with `router.get`
+
+You don't have to write what's inside the routes for now, we will provide more details in the upcoming sections. But just make sure you have the skeletons ready, just like the one in the above example.
+
+So now...we need to tell the main `server.js` file that these routes exist.
+
+At the top of `server.js` write in the following line
+
+<Code
+  js
+  code={`
+var accountRoutes = require('./routes/account.js')
+`}
+/>
+
+and after the app get and post routes for `/`, just write in the following line:
+
+<Code
+  js
+  code={`
+app.use('/account', accountRoutes)
+`}
+/>
+
+Now, we will be able to access our account routes at the following urls (but nothing is going to happen, because you haven't written the logic for each route yet):
+
+- `localhost:3000/account/signup`
+- `localhost:3000/account/login`
+- `localhost:3000/account/logout`
+
+See what the router allowed us to do? It allowed us to segment off a subset of routes and just append a url prefix to all of them so it is super clear exactly what the organization of our application looks like.
+
+The first set of routers we want to implement are the account management ones. We want to eventually "protect" our application and restrict the ability to add questions _only_ to registered users.
+
+### Signup
+
+**TODO:**
+
+- implement `GET` route for `/account/signup`
+- implement `POST` route for `/account/signup`
+- modify `/views/signup.hbs` to allow signup
+
+Note that for the `GET` route, we have already made an html page under the folder `view` for you for signing up route. So for the `GET` route, all you need to do is just render that page (like what you have done for the `GET /` route).
+
+The `POST` route will handle grabbing the information from the form submission. You will need to grab the relevant fields from the form (recall how we get the questionText in `POST /` route). Also, you will need to modify the `signup.hbs` file to let the form point to the `POST /account/signup` route.
+
+- Once you have that done, you need to set up a database model that actually allows the user to be registered into the database itself. This database model (look in the `models/user.js` file), should have two fields, a `username` field of type `String` and `password` field of type `String`. Remeber you have to perform uniqueness checks before actually saving the new user in the DB.
+- Once the user has successfully signed up, he/ she should be **redirected to the `/account/login` page**
+
+### Login
+
+**TODO:**
+
+- GET `/account/login` should just render out `views/login.hbs`.
+- POST `/account/login` should query our database for a `username` and `password` that matches the one submitted in our form.
+  - If the POST request is successful + we have found a user that matches the credentials, you should redirect the user to the index `/` page
+  - Otherwise, you should throw an Error
+
+Also, you might want to think about how to pass the data in the `form` from frontend to backend.
+
+### User authentication + Sessions:
+
+**TODO:**
+
+- store user's identity in a session object
+
+Great...so now we can register users and log in...but how do we actually persist a "logged in" state across multiple requests? That's where the idea of sessions comes in. A session is essentially a means by which we can actually persist some information about a user (or anything else really) across multiple requests. These sessions can be stored in cookies that are sent along with the user for every request.
+
+It basically works as follows:
+
+- User logs in.
+- Server authenticates user and gives them a unique cookie that has some information stored in it (e.g. an encrypted object that just has the keys { userId: 123455 })
+- On subsequent requests, the user has this encrypted cookie that it automagically passes to the server upon each POST/GET request. The server then decrypts the cookie, sees that this request came from userId 123455 and knows that the user is actually authenticated
+- If the user logs out, the server sets the cookie of the user to an empty object so all subsequent requests from the user are not considered authenticated.
+
+Now...how do? Welp, we do via `cookie-sessions`
+
+In server.js somewhere near the top do we have included
+
+`var cookieSession = require('cookie-session')`
+
+We are also kind enough to provide the following lines to you :)
+
+<Code
+  js
+  code={`
+app.use(
+  cookieSession({
+    name: 'local-session',
+    keys: ['spooky'],
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  })
+)
+`}
+/>
+
+This says that all the cookies from the website are encrypted with the key `spooky` and have a maximum age (i.e. maximum life span) of 24 hrs. After that point, they are considered invalid.
+
+So now, it is your time to figure out how to use sessions to store user's identity (Hint: Google is your friend).
+
+### Logout
+
+**TODO:**
+
+- Set Up a `GET` route for `/account/logout`
+- Implement conditional rendering logic for logged-in users in handlebars
+
+When you accesss `/account/logout`, you should invalidate the user session. If you are not sure how to, just google the relevant info.
+
+At this point, you might want to ask what is the difference between having sessions and not having sessions. Great! Because the next thing we are going to take is to show this difference. Recall that all content is rendered through the frontend/ handlebar files. So now look at the handlebar files, you might notice something that looks like this
+
+<Code
+  lang="hbs"
+  code={`
+{{#if user}}
+	...
+{{else}}
+	...
+{{/if}}
+`}
+/>
+
+Looks reasonable, right? If user exists, render the first part. Else, render the things after the `else` clause. But why is it not working? Recall that for the frontend to be showing data, we need to pass data from the backend. So you might want to look into what we have done earlier for `res.render()`. Now I believe you know how to do the rest.
+
+Moreover, in the nav bar of the app, you should do the following so the logged user can see his/ her name as well as a log route link that once clicked brings the user to the `/account/logout` route.
+
+<Code html code={`
+<div class="nav">
+  <h2>Campuswire Lite</h2>
+  <!-- If user is logged in, display his/her username and add a link to the log
+  out route, else, render nothing -->
+</div>
+`} />
+
+### Middlewares
+
+**TODO:**
+
+- implement `isAuthenticated` middleware
+- add `isAuthenticated` middleware to `POST logout` route
+
+As mentioned in class, a middleware is a function that executes before a certain subset (or all) of the requests that go into our application. This is useful for checking things like whether is user is authenticated or not and handling errors in our application.
+
+Let's implement a middleware function called `isAuthenticated`. The function checks to see if a user is defined on the session object. If it is, then we allow the request to continue without any error parameters passed on (just by calling `next()`). Otherwise, we redirect the request to the `/login` page.
+
+We have provided some code for you in `/middlewares/isAuthenticated.js`, it's time for you to fill out the rest. (Hint: session may be helpful here to check whether the user is logged in or not)
+
+Right now, this middleware is just a function definition. To actually execute this on some routes, we need to do the following:
+
+In your `GET logout` route, add the `isAuthenticated` middleware.
+
+<Code
+  js
+  code={`
+router.get('/logout', isAuthenticated, function (req, res) {
+  /* ... */
+})
+`}
+/>
+
+What this essentially means is that the user has to be first logged in before logging out.
+
+### API Routes
+
+In class, we covered the idea of an API route as a designated route on a server that deals with just sending back information from the user in the form of JSON or some other easily parsably text. This is especially useful for AJAX calls because they issue requests to routes on your server and do something with what the route returns. As we saw in class, if we just do an AJAX call on the `/` route, we'll get back a string that represents the html of the rendered index.hbs page. Rather than trying to parse out relevant info (in class the Todos, here the Questions), we can just designate a route `/api/questions` that just get's us all the questions in a nice little JSON.
+
+Since this is a set of routes that we want to be accessible under a `/api` prefix, go back to `server.js` and mount the API routes in this file under the `/api` prefix (recall how we did that for the `/account` routes).
+
+This should be how your `/routes/api.js` looks like initially
+
+<Code
+  js
+  code={`
+var express = require('express')
+var router = express.Router()
+var Question = require('../models/question.js')
+ 
+router.get('/questions', function(req, res) {})
+router.post('/questions/add', function(req, res) {})
+router.post('/questions/answer', function(req, res) {})
+ 
+module.exports = router
+`}
+/>
+
+### Get All Questions
+
+**TODO:**
+
+- implement `GET` route for `/api/questions`
+
+This should be easy, we have already provided similar code to you in `server.js`. If the DB lookup is successful, your response should include the result. Otherwise, if there is any error, you should pass the error to the error handler.
+
+### ADD a question
+
+**TODO:**
+
+- change the schema in `question.js` to include the appropriate fields
+- implement `POST` route for `/api/questions/add`
+
+This should also be easy as we have done similar things for you in `server.js`. Notice that in the `POST /` route in `server.js`, we do not know who posted the question. But ideally we want to know the author of the question, so first of all, you might want to include `author` to your `questionSchema` in `models/question.js`. Next, you should think about how you can get the author from the request (session may be helpful here).
+
+### Add Answer to Question
+
+**TODO:**
+
+- change the schema in `question.js` to include the appropriate fields
+- implement `POST /api/questions/answer` route
+
+Okay, so now we want to add in the functionality to add an answer to a question via an API route (basically this will be in place so people can answer a question).
+
+In order to answer questions, we need to be able to store the answer somewhere. So in `models/question.js` add the appropriate fields `answer` to your `questionSchema`.
+
+Also, we have to know the answer and the question we are answering. So the API should take into two parameters: `questionId` and `answer`.
+
+Other than this, things should be similar to how you implemented `POST /` route.
+
+- If the response is successful, respond with `{ success: 'OK' }`.
+
+To test this, we need to find a question \_id to modify (where might we easily access a list of questions to look hmm...) and edit our Postman request URL and body parameters accordingly. If we revisit `/api/getQuestions` you should be able to see the question you added an answer to actually have an answer property now.
+
+### Frontend
+
+#### Adding a Question on the frontend
+
+If you click 'Add new Question +', you should be greeted with a modal:
+
+This logic of clicking the "Add new question +" button and displaying the modal (i.e. changing its css style property from `display:none` to `display:block`) is done on lines 56-64 of `main.js`.
+
+<Code
+  js
+  code={`
+// when we want to make a new question, show the modal
+$('#new-question').on('click', function() {
+  $('.modal').css('display', 'block')
+})
+ 
+$('#close-modal').on('click', function() {
+  $('.modal').css('display', 'none')
+})
+`}
+/>
+
+Take a look through the `index.hbs` structure to see what exactly all the jquery elements are referring to.
+
+<Code lang="hbs" code={`
+<div class="main-body">
+  <div class="left-col">
+    {{#if user}}
+    <a href="#" class="btn" id="new-question">Add new Question + </a>
+    <div class="modal" style="display:none">
+      <div class="question-area">
+        <label>Add Question:</label>
+        <textarea type="text" id="question-text"></textarea>
+        <a class="btn" type="submit" id="submit-question">Submit Question</a>
+        <a id="close">Close</a>
+      </div>
+    </div>
+    ...
+  </div>
+</div>
+`} />
+
+Now we want to actually be able to add a new question. But why is this different than our original idea of having a form? Well...right now it isn't too different, but we're going to be driving home the idea of using an AJAX request to communicate information to the server via an API route rather than setting up a typical post route. Here, once we click on the "Submit question" button in our modal, we still get to stay on the page. Beforehand, we actually reload the entire page. This will be motivated later on as we add in the ability to instantaneously see the new question appear at the bottom of our list live.
+
+So now, let's actually code up the stuff that happens on click of the Submit Question button. We've provided a short function stub in `main.js`
+
+<Code js code={`
+$('#submit-question').on('click', function() {
+  var qText = $('#question-text').val()
+  // TODO: make a post request to /api/addQuestion with the qText as the
+  // questionText attribute. On success, hide the modal
+})
+`} />
+
+This function basically says, when we click on the submit button function, grab the text from the textbox and store it in qText. Now we need to implement the AJAX post logic to our server's API route for handling adding a new question. That's the `/api/addQuestion` route. To make an ajax post request, we need to specify `url`, `type`, `data`, and `success` properties of the object passed into the `$.ajax(...)` function.
+
+<Code js code={`
+$.ajax({
+  url: '/api/questions/add',
+  data: { questionText: qText },
+  type: 'POST',
+  success: function(res) {
+    console.log(res)
+    // exercise for you: close the modal (hint: see how we do it in other places)
+  },
+})
+`} />
+
+The code here is fairly self explanatory. The only thing left for you to do here is to put in the code within our success function to hide the modal.
+
+But now, if we test out this function, we don't get to actually see our new question get added to our list. However, if we go to `localhost:3000/api/questions` we actually do see it there. Hmm. There are a couple of ways that we could handle adding the new question to the list
+
+**Way 1:** in the `success` method of the above AJAX post, insert a new element into the list.
+
+**Way 2:** Have a running interval in the background that checks the `/api/questions` route ever 2.5 seconds and updates the list of questions that way. If we submit a question, it'll show up in the list with delay at maximum of 2.5 seconds.
+
+Way 2 does present us with multiple advantages since we kinda kill two birds with one stone (i.e. we can insert our new question into the list _and_ we can update our list with new questions that other users submit).
+
+If you've finished this part correctly, you should be getting this behavior from your 'Add new Question +':
+
+![gif of module appearing when adding new question](https://user-images.githubusercontent.com/47411373/74400832-4517d880-4ded-11ea-82eb-09b32fc11c48.gif)
+
+#### Getting new questions
+
+In the `main.js` file, find the method stub `getQuestions()`
+
+<Code js code={`
+var data = []
+// ...other stuff
+ 
+function getQuestions() {
+  // TODO: make an ajax request to /api/getQuestions. on success
+  //       set  the data variable equal to the response and render
+  //       out the question previews (by callingrenderPreviews())
+  //       Later on in the writeup, also render the active question
+  //       (to update it) with renderactive()
+}
+`} />
+
+TODO: Just as we did in class, make an ajax request of type `GET` to the `/api/questions` route. On success, set the `data` variable equal to the response (this is so we can keep track of the questions and use them in other methods to do things to the questions). Also call the `renderPreviews()` method when you are done.
+
+Note that the renderPreviews method (below) relies on the data variable being set properly so we can add the list elements to our list of questions.
+
+<Code js code={`
+function renderPreviews() {
+  $('#questions').html(
+    data
+      .map(i => '<li data-qid="' + i._id + '">' + i.questionText + '</li>')
+      .join('')
+  )
+}
+`} />
+
+**Note** for each question we make, we give it a data property qid equal to its question id. Will be useful in the next section!
+
+So _now_ if you add a question, you should see it pop up in the list! Similarly, if another user session adds a question, you'll be able to see it pop up for you as well without refreshing the page. Wow!
+
+#### Showing a Question
+
+We have provided for you a wonderful method that inserts a question's info into the right pane of our website.
+
+<Code js code={`
+function renderActive() {
+  if (activeIdx > -1) {
+    var active = data[activeIdx]
+    $('#show-question').css('display', 'block')
+    $('#question').text(active.questionText ? active.questionText : '')
+    $('#author').text(active.author ? active.author : '')
+    $('#answer-text').text(active.answer ? active.answer : '')
+  } else {
+    $('#show-question').css('display', 'none')
+  }
+}
+`} />
+
+Look through this method and the html to figure out what's going on.
+
+Note that this method relies on two variables `activeIdx` and `data`. `data` is set on every API call to `/api/questions`. `activeIdx` is what we will set in this next question. But first some motivation:
+
+Let's say we click on a question. The ideal flow is that we get the id of that question and then figure out where in our array of data that question lies and we just would _normally_ store the _value_ at that array index. However, since we are dealing with data that changes, it is very possible that our question could change while we are looking at it. By storing only the index of the active question and getting the question information from our data array each time we call renderActive(), we can ensure that the new data of the question will actually render out. This will be more relevant in the next part.
+
+So, when we implement the following stub:
+
+<Code js code={`
+$('#questions').on('click', 'li', function() {
+  // TODO: When a question is clicked, set the \`active\` variable equal to
+  //       the data of the question that is active (hint: look through the
+  //       data array. If an array entry has the same _id as the _id we just
+  //       declared here, it is the active question
+ 
+  // we now render out the active question
+  renderActive()
+})
+`} />
+
+We need to do a few things.
+
+- get the \_id of the question we have clicked on (hint, look up how to access the `data-qid` attribute we've set for you
+- look through the `data` array for any question `_id` that matches the `_id` we just found
+- Once we've found that, set `activeIdx` equal to that index.
+
+Note, this method implementation can be done in 1 line of a jquery call and a forloop (or `.forEach` call if you're fancy).
+
+At the end of the method, we call `renderActive()`. So if we implement everything and click on a question, it should mimic the following behavior:
+
+![gif of showing a question](https://user-images.githubusercontent.com/47411373/74400783-1b5eb180-4ded-11ea-827e-b9adca3b7c0a.gif)
+
+Make sure this also works for new questions that you insert into the list!
+
+#### Adding Answers
+
+Now, we have a bit of a tall feature request here:
+
+- We want to answer these questions (that's fine)
+- But if we are on a question and someone else answers, we should be able to see the answer that is displayed change as well.
+- Also, when we submit, we should also see our answer pop up.
+
+Okay. So the relevant part to implement here is the following method:
+
+<Code js code={`
+$('#show-question').on('click', '#submitAnswer', function() {
+  var answer = $('#answer').val()
+  // TODO: When we submit a new answer, send a POST request to
+  //      /api/questions/answer with  the question answer and the active question's
+  //      _id.
+})
+`} />
+
+Okay, so we've sent an Ajax POST request before, so that's fine (ref `/api/questions/add` ajax request). But now recall that our `/api/questions/answer` api route needs a question `_id`to figure out what question it needs to add the given answer to. We already give you an `answer` variable that contains the actual value of our `#answer` textbox.
+
+But now we need to find out what is the active question's Id.
+
+So TODO Here:
+
+- Make an ajax post request to the `/api/questions/answer` url with the data object containing keys answer and qid (or whatever you used to refer to your question id).
+- On success, don't do anything except console.log whatever response you get.
+
+Okay great, we added an answer...but that didn't do anything. In order to actually see the new answer pop up, I need to click on the question again after 2.5 s have elapsed and then i'll get the updated answer. Why is this?
+
+Well...it's because we have no way of getting updated info on our questions other than the 2.5s interval we have on getting all the questions from `/api/questions` (which in turn will update the `data` array).
+
+We know that the `renderActive()` method will re-look up the question corresponding to the activeIdx. Perhaps it'd be best to call `renderActive()` every couple of seconds...perhaps every 2.5 seconds!
+
+Edit the `getQuestions()` method AJAX call to be the following:
+
+<Code js code={`
+$.ajax({
+  url: '/api/questions',
+  success: function(res) {
+    data = res
+    renderPreviews()
+    renderActive()
+  },
+})
+`} />
+
+That way we constantly update the active question! We should get the following behavior:
+
+![gif of adding answers](https://user-images.githubusercontent.com/47411373/74400790-23b6ec80-4ded-11ea-9526-739561ed133c.gif)
+
+## Deploying on Heroku & Submission
+
+And now...we are done!-ish
+
+Let's actually share this application with our friends :) (And the TAs)
+
+Create a heroku account and verify it (add a credit card). If you do need help on verification (or would like a credit card to register under, make a private Campuswire post).
+
+Install the [heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
+
+Log in via the CLI.
+
+In your current directory, create a new git repository with `git init`. Once you have done this, add all files, except the `node_modules` folder, to the commit stage (`git add filename1 filename2 folder1 ...`) and make a new commit
+`git commit -m "initialize"`.
+
+Now...**you need to make sure that your package.json file has all the dependencies that are actually required for your app to run**. If a dependency (eg express) isn't there, run (e.g.) `npm install --save express`.
+
+Of course, with any new file change, you need to add it (in this case `git add package.json`) and commit it (`git commit -m "updated package.json with new dependencies"`).
+
+Almost there...
+
+Run `heroku create yourpennkey-cis197-s19-hw5` (e.g. `suria-cis197-s19-hw5`) and then run `git push heroku master`.
+
+Once that is done (hopefully there aren't any errors), we need to tell heroku to make a database
+
+```text
+heroku addons:create mongolab
+```
+
+and then do `heroku restart`
+
+If you visit your website `suria-cis197-s19-hw5.herokuapp.com` it _should_ work!
+
+### Submission instructions
+
+Before you do anything, create a file `heroku_url.txt` in the top level directory of your code (same level as `server.js`). Just copy paste in the link to the heroku app and save the file.
+
+Submit the following files to gradescope. There are a few automated tests to just check that you have the files we want to look at.
+
+As always, great job for getting through this assignment! It's definitely a time consuming one, but an important one that teaches you a lot about how web apps truly work in the backend.
+
+#### Rubric
+
+The main things we will look for are as follows:
+
+- User signup/login valid: [5pts]
+- Adding questions restricted to users only: [2pts]
+- /account/logout link is authentication protected. [2pts]
+- Persistent questions database. [5pts]
+- Able to display questions upon submission of new question [3pts]
+- Files:
+  - There should be evidence that middlewares were implemented (isAuthenticated) [2pts]
+  - There should be a routes/account file and the account routes should be appropriately mounted [2pts]
+  - There should be evidence of a database models for Users and Questions. [2pts]
+- UX:
+  - Evident links to login, signup, sign in and homepage (just enough so that we can navigate around, this isn't shown in the writeup...but we'll give you freedom on how you choose to implement this). [2pts]
+
+Okay so now that we have a barebones functioning Campuswire that allows users to sign up, log in, and submit questions, we want to add some more functionality. For example, we did not have the ability to answer questions, nor did we have the ability to see questions and answers come in "live" (i.e. we had to refresh the page in order to see new content). Thus, we want our new feature set to be:
+
+- "Live" functionality for viewing new questions come in
+- "Live" functionality for viewing new answers come in on a question we are looking at
+- Ability to select question and see content/answers without doing page reload
+- Ability to submit answer to question without doing page reload
+- Ability to add question without doing page reload

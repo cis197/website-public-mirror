@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Syllabus",
+    "url": "https://drive.google.com/open?id=1DwJdajfsy1oYJrWG3XY80T3I-TNlaJLowbS8kM2m4KY&authuser=0",
+    "lecture": 0
+  },
+  {
+    "name": "Eloquent JS, Chapters 1 & 2",
+    "url": "http://eloquentjavascript.net/02_program_structure.html",
+    "lecture": 1
+  },
+  {
+    "name": "[MDN] A re-introduction to JavaScript",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/A_re-introduction_to_JavaScript",
+    "lecture": 1
+  },
+  {
+    "name": "Callback Hell",
+    "url": "http://callbackhell.com/",
+    "lecture": 2
+  },
+  {
+    "name": "Eloquent JS, Chapter 6",
+    "url": "http://eloquentjavascript.net/06_object.html",
+    "lecture": 3
+  },
+  {
+    "name": "Codecademy HTML/CSS track",
+    "url": "https://www.codecademy.com/tracks/web",
+    "lecture": 4
+  },
+  {
+    "name": "Bootstrap docs",
+    "url": "http://getbootstrap.com/",
+    "lecture": 4
+  },
+  {
+    "name": "[MDN] Document Object Model",
+    "url": "https://developer.mozilla.org/en-US/docs/DOM",
+    "lecture": 4
+  },
+  {
+    "name": "Chrome DevTools docs",
+    "url": "https://developers.google.com/chrome-developer-tools/",
+    "lecture": 4
+  },
+  {
+    "name": "jQuery API",
+    "url": "https://api.jquery.com/",
+    "lecture": 4
+  },
+  {
+    "name": "HTTP Made Really Easy",
+    "url": "https://www.jmarshall.com/easy/http/",
+    "lecture": 6
+  },
+  {
+    "name": "Express Docs",
+    "url": "http://expressjs.com/",
+    "lecture": 6
+  },
+  {
+    "name": "React Docs",
+    "url": "https://facebook.github.io/react/index.html",
+    "lecture": 8
+  },
+  {
+    "name": "Redux Docs",
+    "url": "http://redux.js.org/",
+    "lecture": 8
+  },
+  {
+    "name": "Code for todolist example",
+    "url": "https://github.com/cis197/lecture-examples/tree/master/lec7",
+    "lecture": 8
+  },
+  {
+    "name": "React as an Implementation Detail",
+    "url": "https://chriskiehl.com/article/react-as-an-implementation-detail",
+    "lecture": 9
+  },
+  {
+    "name": "Lecture Example",
+    "url": "https://github.com/cis197/lecture-examples/tree/master/lec8",
+    "lecture": 11
+  }
+]

@@ -1,0 +1,250 @@
+---
+path: '/assignments/3'
+date: '2020-01-29'
+due: '2020-02-05'
+title: 'Homework 3: Object Oriented JavaScript'
+hidden: false
+---
+
+import { Code } from '../../components'
+
+Note that this homework will be much lighter than last week's.
+
+## Introduction
+
+Snake is a fun game that used to be on Nokia phones back in the day. Here's a GIF demo:
+
+![The final product](https://cis-197.s3.amazonaws.com/snake.gif)
+
+Using object-oriented JavaScript, you'll write the actual logic that powers the Snake game. We've already written the front-end for you, so that when you finish the assignment, you'll have a beautiful game of Snake you can play.
+
+# Overall Architecture
+
+There are 3 major components to this application:
+
+- The HTML file that will be rendered by your browser (`index.html`)
+- The JavaScript that makes the front-end look like Snake (everything in `frontend-api`)
+- The game logic (`index.js`). This handles things like (but not limited to):
+  - Handling when the user presses keys on the keyboard
+  - What happens when the snake collides into a wall
+  - What happens when the snake eats "food"
+  - What happens when the snake collides into its own body
+  - How the snake should be initialized and then move
+
+You'll notice that in `index.js` , we import a couple of things from `frontend-api/api.js`
+
+- `dispatchChangeGameState`
+  - This function takes `snake` and `food` as parameters. When this function is executed, it takes the positions of the snake and the food and maps it to a 2d array. This 2d array is then rendered by our front-end code.
+- `dispatchStartGame`
+  - This function should be executed whenever the game is "started," or rather when the snake starts moving.
+- `dispatchEndGame`
+  - This function should be executed whenever the game is "ended," or rather when the snake stops moving (has died).
+
+We also import a few things from`frontend-api/constants.js`
+
+- `width` - the width of the game board
+- `height` - the height of the game board
+- `frameRate` - the game state will be updated every `frameRate` milliseconds
+
+## High level game flow
+
+1. The game is started by the user pressing the space key on their keyboard
+2. The game begins to update the state every `frameRate` milliseconds.
+   - "updating the state" consists of moving the snake in the right direction, detecting if the snake has collided with either the wall, itself, or food, and then triggering different events
+3. The game stops when the snake dies, or the user clicks `reset`
+
+# Before you start coding
+
+1. Run `npm install`
+2. Run `npm run dev` and let that boi keep running while you complete the assignment
+3. You'll be able to see the updates that your code makes by continuously visiting `localhost:3000` in your web-browser.
+
+# The Snake Class
+
+**Todo**: Implement `constructor`, `move`, and `changeDirection`
+
+The Snake class has three functions (`constructor`, `move`, `changeDirection` ) and two properties (`direction` and `body`). We describe these functions below.
+
+`constructor`
+
+- `constructor` takes in width and height parameters (`w` and `h`). It then initializes `snake.body` and `snake.direction`.
+
+  - `snake.body` is an array of objects that each look like
+
+    ```text
+    { x: some_x_value, y: some_y_value }
+    ```
+
+    The "head" of the snake is the first element in `snake.body` and the tail is the last element in `snake.body`. The head of the snake should be located at
+
+    ```text
+    { x: Math.floor(w / 2), y: Math.floor(h / 2) }
+    ```
+
+    Finally, `snake.body` should be initialized to have length 5. So, if `w` is 30 and `h` is 30, `snake.body` should be
+
+    ```text
+    [
+      {x: 15, y: 15},
+      {x: 15, y: 16},
+      {x: 15, y: 17},
+      {x: 15, y: 18},
+      {x: 15, y: 19}
+    ]
+    ```
+
+  - `snake.direction` should be initialized to `UP`, which a constant imported from `frontend-api/constants.js`.
+  - The constructor should bind the functions `move` and `changeDirection` to `this`.
+
+- `changeDirection` changes the value of `snake.direction` to either `RIGHT`, `LEFT`, `UP`, or `DOWN`, depending on the value of the parameter passed in. If the parameter `direction` is neither `RIGHT`, `LEFT`, `UP`, nor `DOWN`, you should throw an Error with a useful error message.
+- `move` takes in a boolean parameter `grow`. Every `frameRate` milliseconds, `snake.move` is executed by the `Game` object to move the snake. `move` updates `snake.body` to move in the direction of `snake.direction`. If `grow` is truthy, then `snake.body` should increase by 1 unit. If `grow` is falsy, then `snake.body` should not increase and simply move in the correct direction. To shed some light on what I mean when "the body moves in the correct direction," consider the following example:
+
+<Code
+  code={`
+// Pretend width and height are initialized to be 30 and 30 respectively
+const snake = new Snake(width, snake)
+ 
+/*
+Currently, snake.direction should be "UP" and snake.body should look like:
+[
+  {x: 15, y: 15},
+  {x: 15, y: 16},
+  {x: 15, y: 17},
+  {x: 15, y: 18},
+  {x: 15, y: 19},
+]
+*/
+ 
+snake.move(false)
+ 
+/*
+snake.body should now look like:
+[
+  {x: 15, y: 14},
+  {x: 15, y: 15},
+  {x: 15, y: 16},
+  {x: 15, y: 17},
+  {x: 15, y: 18}
+]
+*/
+ 
+snake.move(true)
+ 
+/*
+snake.body should now look like:
+[
+  {x: 15, y: 13},
+  {x: 15, y: 14},
+  {x: 15, y: 15},
+  {x: 15, y: 16},
+  {x: 15, y: 17},
+  {x: 15, y: 18},
+]
+*/
+ 
+snake.changeDirection(RIGHT)
+ 
+// snake.direction is now RIGHT
+ 
+snake.move(false)
+ 
+/*
+snake.body is now:
+[
+  {x: 16, y: 13},
+  {x: 15, y: 13},
+  {x: 15, y: 14},
+  {x: 15, y: 15},
+  {x: 15, y: 16},
+  {x: 15, y: 17},
+]
+*/
+`}
+  lang="js"
+/>
+
+Before you move past this part, ensure that you pass all the test cases that begin with the word "Snake."
+
+# The Game Class
+
+The Game class has eight functions (`constructor`, `reset`, `spawnFood` , `checkCollision`, `shouldGrow`, `updateGameState`, `startGame`, `endGame`) and seven properties (`width` , `height`, `playing`, `snake`, `frameRate`, `keyPressed`, `gameInterval`, and `food`). We've already written `constructor` and `reset`.
+
+## Instance Variables
+
+`width` and `height` are the dimensions of the game board.
+
+`playing` is a boolean that denotes whether or not the snake is moving. Initially, `playing` is false; once the game is started, then `playing` is set to true. When the snake dies, the game is over and then `playing` is set to false.
+
+`snake` is an instance of the Snake class.
+
+`frameRate` is a Number denoting the number of milliseconds that should pass between state refreshes
+
+`keyPressed` denotes whether or not the user has pressed a key before the snake has moved.
+
+`gameInterval` is the ID of an interval that updates the game's state every `frameRate` milliseconds. Learn more about intervals [here.](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setInterval)
+
+`food` is an object that has keys `x` and `y` denoting the position of the Snake's food at different points in the game. The `food` is the little red square that moves around as the game progresses (play the demo if you don't know what I'm talking about).
+
+## Functions
+
+**Todo:** write `spawnFood` , `checkCollision`, `shouldGrow`, `updateGameState`, `startGame`, and `endGame`. These functions should be written so that they satisfy the following specifications.
+
+`constructor`
+
+- This function initializes instance variables, binds all Game's functions to `this` context, creates a food object (initialized to a random location on the grid via `this.spawnFood()`), and communicates the initial game state to the frontend code via `dispatchChangeGameState(this.snake, this.food)`.
+
+`spawnFood`
+
+- This is the first function you will write. Its only purpose is to assign a random location (object with `x` and `y` keys) to the `food` instance variable. Remember that `x` must be between 0 and the width of the board. Similarly, `y` must be between 0 and the height of the game board.
+- Don't worry about the food spawning at the same location as the body of the snake.
+
+`startGame`
+
+- You'll notice that we've already written a line `dispatchStartGame`. This tells the frontend that the game has begun. You still need to do a couple of things:
+  - Set the `playing` variable to true
+  - Set `gameInterval` to be a new interval which executes `updateGameState` every `frameRate` milliseconds
+
+`endGame`
+
+- This function should set the `playing` variable to false and clear the `gameInterval`. You can clear intervals by using the built-in [`clearInterval` function.](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/clearInterval)
+
+`shouldGrow`
+
+- If the `snake`'s head is at the same location as `food`, return `true`. Else, return `false`.
+
+`checkCollision`
+
+- This is going to be a bit of a meaty function to write 🤪
+- This function returns `true` if the snake's head has collided either with its own body or with any 'wall' and returns `false` otherwise. Remember that the head of the snake is the first element in `snake.body`.
+
+`updateGameState`
+
+- This is the function that is executed every `frameRate` milliseconds
+- The function should execute the following instructions in the following order
+  - Find out if the snake should grow, given the current positions of `snake` and `food`.
+  - Appropriately execute `snake.move(true or false)` depending on the result of the previous instruction
+  - set `keyPressed` to false (we'll see why, when we write the `OnKeyDown` functions)
+  - Determine whether the game should end by checking whether or not a collision has occurred (hint: `checkCollision`)
+  - If a collision has occurred, stop execution. Otherwise, continue
+  - If the snake grew, that means that it "ate" the `food`. So, we should change the location of `food` (hint: `spawnFood`)
+  - The last thing that should happen is the line we've provided: `dispatchChangeGameState(this.snake, this.food)`
+
+Before you continue, make sure you pass all the test cases that begin with `Game`.
+
+## Build OnKeyDownGenerator function
+
+We need to be able to listen for user events (when users press different keys on their keyboards). We only really care if they press the following keys: the "r" key, the space bar, the up arrow key, the down arrow key, the left arrow key, and the right arrow key. The "r" key enables users to reset the game. Pressing the space bar begins the game. The arrow keys do what you'd expect (play the demo if you don't understand this part).
+
+Notice that we've already written some of the code for you, including handling the press of the "r" key and the press of the space bar.
+
+Remember how we talked about `game.keyPressed` earlier? This boolean helps us keep track of whether or not the user has already pressed a key before the snake has updated its position. So, if `game.keyPressed` is true, then we'll want to stop executing the function. Otherwise, we'll want to continue executing the function.
+
+You now only have to worry about when the user presses the arrow key. Whenever a user presses an arrow key (and `game.keyPressed` is `false`), then we'll want to first set `game.keyPressed` to `true` since the user has just pressed a key AND we'll want to change the direction of `game.snake` appropriately (hint: the `changeDirection` function).
+
+Be sure that you pass all the test cases and that you can play snake :)
+
+## Submitting to Gradescope
+
+Run `npm run lint` to make sure you have no linter errors before submitting.
+
+Run `npm run zip` and submit the `files.zip` file that's made to Gradescope. On Gradescope submit all the files that gets outputted on the upload interface.

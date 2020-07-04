@@ -1,0 +1,93 @@
+---
+path: '/development'
+date: '2019-01-27'
+metaTitle: 'Development'
+title: 'Development Guide'
+---
+
+import { InfoMessage } from '../components'
+
+### Intro
+
+There are many ways to write JavaScript, and JavaScript is used for many different purposes from mobile apps to command line scripts and of course in the browser. This is a guide for how you can get started writing JS in an environment that will suit you well for this course and future projects you take on in JS.
+
+<InfoMessage showIcon>
+  <p>
+    <strong>For Windows users:</strong>
+  </p>
+  <p>
+    One of the main appeals of web development is that products work on all
+    devices regardless of OS. That being said, there can be some difficulties
+    when developing web apps from different OS's (particularly Windows). Expect
+    to spend some time debugging and looking around for answers when things
+    don't work quite as expected when installing dependencies and submitting
+    work. The teaching staff will work with you to mitigate these problems!
+  </p>
+  <p>
+    We highly recommend you use{' '}
+    <a href="https://gitforwindows.org/">git bash</a> for running scripts. This
+    will allow for more linux-like syntax and operations.
+  </p>
+</InfoMessage>
+
+---
+
+### Installing node
+
+JavaScript was originally written to bring dynamic content to HTML and CSS websites. Node (Node.js) is a run-time compiler for running JS anywhere and everywhere (not just in the browser). Node Package Manager (npm) is the system which Node uses for installing dependencies (packages) for a program which let you take advantage of frameworks, functions, and tools other people have written.
+
+React and Express are popular examples of Node packages which we will become familiar with over the course of this semester.
+
+If you've heard of Yarn, it's another package manager developed by Facebook which largely does the same thing as NPM with subtle differences. For this course, we will stick to npm for homeworks.
+
+To check if Node is installed, open the Terminal or Command Prompt app on your computer and run:
+
+```text
+node -v
+```
+
+If something along the lines of `v10.16.3` is returned, Node is set up successfully. If you have a version less than 8, consider installing a more recent release. If there is an error or no version is returned, follow the directions below.
+
+You have a few options for installing node, though we highly recommend the first:
+
+#### 1. Installing node via NVM
+
+The _preferred way to install node for this course_ is NVM (Node Version Manager). This lets you change versions of node from your command line which can make things smoother in the case you have node 8 installed by default but we actually want use to use node 10.
+
+NVM is developed for Linux-based devices (including Macs), so for Windows you should use [this alternative](https://github.com/coreybutler/nvm-windows).
+
+To install NVM, follow [this guide.](https://github.com/nvm-sh/nvm)
+
+#### 2. Installing node directly
+
+To install Node, proceed to the [node.js website](https://nodejs.org/en/download/) and download the latest Long Term Support (LTS) version of Node. When the download has finished installing, open the file and follow the prompted instructions until Node is set up on your machine.
+
+To assert everything installed correctly, run:
+
+```text
+node -v
+```
+
+---
+
+### Picking a code editor
+
+Few people write JS in full-fledged IDE's in the way you might be used to running Java in Eclipse or IntelliJ. Though there are solutions for this (like [Webstorm](https://www.jetbrains.com/webstorm/)) these often introduce overhead and unnecessary complexity.
+
+Instead, JS devs often use lighter tools like [VSCode](https://code.visualstudio.com), [Atom](https://atom.io), or [Sublime Text](https://www.sublimetext.com). The CIS 197 staff tends to use VSCode because of the strong developer community, UI, and built-in terminal. All of these tools have built in package managers for installing packages which improve the developer experience like syntax highlighting, help formatting, and help with code completion.
+
+---
+
+### Developing and testing JavaScript code
+
+There are many ways to test JS code. For simple syntax checking, the easiest way is often via the developer tools in your browser (like [Google Chrome](https://developers.google.com/web/tools/chrome-devtools/)) or by running the `node` command on its own in your terminal which gives you a Node-based JS REPL (type `Ctrl + C` to exit `node`).
+
+To test a JS file, navigate in your terminal to the directory where the file is located (if you're not sure how to do this, find an intro guide on how to using your terminal online). From there, you can run `node file-name`. Any `console.log` statement executed in your file will print out to the console of your terminal. This is also a good way to check for syntax errors. It can also be useful to make a new file specifically for testing functions in another file. In the test file, you can `require` the primary file and call functions there.
+
+---
+
+### Using a linter
+
+A linter is a tool for checking that your JavaScript code both does not have syntax errors and is properly styled. In your homework assignments, you can see a `.eslintrc` file which specifies how to configure the linter to meet our preferred style guide for the course. You can learn more about ESLint [here.](https://eslint.org)
+
+We recommend installing the ESLint package and related linter packages for your code editor of choice. Said packages will highlight issues with your code as you type so you can easily resolve them, much like a spell checker in Microsoft Word. You can also check for linter errors from your terminal via the `eslint` package [found here.](https://eslint.org/docs/user-guide/command-line-interface) This is what we run when you submit your assignment to Gradescope.

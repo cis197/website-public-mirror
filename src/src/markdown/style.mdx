@@ -1,0 +1,184 @@
+---
+path: '/style'
+date: '2019-04-07'
+metaTitle: 'Style Guide'
+title: 'JavaScript Style Guide'
+---
+
+import { Code } from '../components'
+
+## Code Style
+
+Code style is extremely important when developing code that you hope to last
+longer than its first writing. This is especially important with JavaScript
+because the interpreter is very tolerant and will allow a great deal of
+syntactic mistakes to pass undetected when code is executed. JS developers must
+exhibit great discipline in writing idiomatic code that is easily readable to
+all other developers.
+
+Because of this, we're going to be adhering to a style guide for code written in this class. If you ever go out and write code professionally, you would do
+well to adhere to a structured style guide as well.
+
+## Basics
+
+**Indentation**: Use spaces, not tabs. 2 or 4 spaces.
+
+**Line Length**: Avoid lines longer than 100 characters.
+
+**Comments**: Be generous with comments, but try to describe more about _why_
+code is the way it is, and the assumptions it makes, rather than _how_ it does things. JavaScript is an expressive enough language (with first class functions, etc.) that you can write very readable code that expresses intent properly.
+
+**Whitespace**: Most tokens should be separated by whitespace. Specifically, you should always have a space before and after your infix operators (`+`, `-`, `&&`, etc). Also use whitespace between the function keyword and its arguments:
+
+<Code
+  code={`
+var parseInt = function (string, radix) {
+  ...
+};
+`}
+  language="javascript"
+/>
+
+`if / else` blocks and `for / while` loops should always be split into lines,
+as per the K&R standard (aka **[The One True Brace Style](http://c2.com/cgi/wiki?OneTrueBraceStyle)**):
+
+<Code
+  code={`
+if (predicate) {
+  ...
+} else {
+  ...
+}
+ 
+for (var i = 0; i < len; i++) {
+  ...
+}
+ 
+while (condition) {
+  ...
+}
+`}
+  language="javascript"
+/>
+
+## Functions
+
+Functions should generally be declared by assigning to an identifier:
+
+<Code
+  code={`
+var parseInt = function (string, radix) {
+  ...
+};
+`}
+  language="js"
+/>
+
+If you use an _identifier_ with a function expression, it provides the added
+benefit of showing up with a proper identifier in stack traces &mdash; but this is not strictly necessary.
+
+<Code
+  code={`
+var parseInt = function parseInt (string, radix) {
+  ...
+};
+`}
+  language="js"
+/>
+
+**_Do not_** use a function _definition_ syntax like the following example, because the scoping works slightly differently – this
+function is "hoisted" to the top of its scope while the above _function
+expression_ syntax means that a function is only available when its expression
+is evaluated (and stored to that variable).
+
+<Code
+  code={`
+// Don't use this syntax!
+function parseInt (string, radix) {
+  ...
+};
+`}
+  language="js"
+/>
+
+## Operators
+
+**_Do not_** use the double-equal `==`. It does type coercion and is [generally recognized as a bad idea](http://www.impressivewebs.com/why-use-triple-equals-javascipt/).
+
+**_Do_** use the triple-equal `===`, which does _strict equality_.
+
+**_Do not_** perform assignments in the conditional of `if` and `while` statements. It is easy to mistake an assignment like this one...
+
+<Code code="if (a = b) { ... }" language="js" />
+
+...for an equality check like this one:
+
+<Code code="if (a === b) { ... }" language="js" />
+
+**_Do not_** use `eval` in your programs. Similarly, **_do not_** use the `Function` constructor or pass strings to `setTimeout` / `setInterval`. We'll never ask you to do these weird hacky sorts of things - this class is about encouraging _good_ code.
+
+**_Do not_** use bitwise operators (`&`, `|`, and `~`) in place of logical operators (`&&`, `||`, and `!`).
+
+Similarly, [**_do not_** use the `with` statement](http://yuiblog.com/blog/2006/04/11/with-statement-considered-harmful/).
+
+**_Do not_** [use the `for-in` loop for arrays ](http://stackoverflow.com/questions/500504/why-is-using-for-in-with-array-iteration-such-a-bad-idea). You can use if for objects, but this isn't necessary either - if you need to iterate over an object's properties, you should probably use `Object.keys`.
+
+## Code Cruft
+
+**_Do not_** leave debugging-type functions (like `console.log` or `alert`) in your finished code. The obvious exception is in cases where writing to the console, or displaying an alert message, is the intended function of the code.
+
+## IIFEs
+
+Finally, you may want to include an [Immediately Invoked Function Expression (IIFE)](http://benalman.com/news/2010/11/immediately-invoked-function-expression/) in your JavaScript files to avoid polluting the global namespace - but this is not strictly necessary.
+
+<Code
+  code={`
+(function() {
+  // do stuff
+  
+  module.exports = {
+    // export stuff
+  }
+})()
+`}
+  language="js"
+/>
+
+## ESLint
+
+In order to do ensure that your JavaScript submissions adhere to this style guide, we will be using [ESLint](http://eslint.org/). You should definitely check your code style with ESLint before submitting - see [Lecture 1](build/lectures/lecture1.pptx) for instructions on how to use ESLint.
+
+We will provide you with a specific `.eslintrc` file for each homework, but they will all have these rules (which are among the best-accepted and most general JavaScript style guidelines).
+
+<Code
+  code={`
+{
+  "env": {
+    "node": true
+  },
+  "rules": {
+    "brace-style": [2, "1tbs"],
+    "camelcase": 0,
+    "no-alert": 2,
+    "no-bitwise": 2,
+    "no-empty": 2,
+    "no-ex-assign": 2,
+    "no-lonely-if": 2,
+    "no-loop-func": 2,
+    "no-mixed-spaces-and-tabs": 2,
+    "no-tabs": 2,
+    "no-underscore-dangle": 0,
+    "no-unused-vars": 0,
+    "quote-props": [2, "as-needed"],
+    "space-before-function-paren": [2, "never"],
+    "quotes": [2, "single", "avoid-escape"],
+    "space-before-blocks": 2,
+    "space-infix-ops": 2,
+    "strict": 0
+  }
+}
+`}
+  lang="js"
+/>
+
+The specific definitions for these rules can be found in [the ESLint rules documentation.](http://eslint.org/docs/rules/) Including them in your final project would probably be a good idea as well - it could save you a great deal of trouble down the line!

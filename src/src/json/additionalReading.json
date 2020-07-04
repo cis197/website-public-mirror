@@ -1,0 +1,21 @@
+[
+  {
+    "title": "JavaScript: The Good Parts",
+    "author": "Douglas Crockford",
+    "url": "http://www.amazon.com/JavaScript-Good-Parts-Douglas-Crockford/dp/0596517742"
+  },
+  {
+    "title": "Eloquent JavaScript",
+    "author": "Marijn Haverbeke",
+    "url": "http://eloquentjavascript.net/"
+  },
+  {
+    "title": "Developing Backbone.js Applications (DBA)",
+    "author": "Addy Osmani",
+    "url": "http://addyosmani.github.io/backbone-fundamentals"
+  },
+  {
+    "title": "Mozilla Developer Network JS Articles",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
+  }
+]

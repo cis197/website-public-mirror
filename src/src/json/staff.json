@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Nihar Patil",
+    "role": "Instructor",
+    "image": {
+      "src": "../images/staff/nihar.jpg"
+    },
+    "email": "niharp@seas.upenn.edu",
+    "officeHours": "As needed"
+  },
+  {
+    "name": "Cameron Cabo",
+    "role": "Instructor",
+    "image": {
+      "src": "../images/staff/cameron.jpg"
+    },
+    "email": "ccabo@seas.upenn.edu",
+    "officeHours": "Thursday 4:30-6:30 PM in Towne 217"
+  },
+  {
+    "name": "Taras Bukachevsky",
+    "role": "Teaching Assistant",
+    "image": {
+      "src": "../images/staff/taras.png"
+    },
+    "email": "tarasb@seas.upenn.edu",
+    "officeHours": "Monday 5-7 PM in Towne 217"
+  },
+  {
+    "name": "Peter Baile Chen",
+    "role": "Teaching Assistant",
+    "image": {
+      "src": "../images/staff/peter.jpg"
+    },
+    "email": "cbaile@seas.upenn.edu",
+    "officeHours": "Sunday 3-5 PM in MBA Cafe"
+  },
+  {
+    "name": "Justin Choi",
+    "role": "Teaching Boi",
+    "image": {
+      "src": "../images/staff/justin.jpg"
+    },
+    "email": "juicetin@seas.upenn.edu",
+    "officeHours": "Tuesday 8-10 PM in MBA Cafe"
+  },
+  {
+    "name": "Marta Garcia Ferreiro",
+    "role": "Teaching Girl",
+    "image": {
+      "src": "../images/staff/marta.jpg"
+    },
+    "email": "martagf@seas.upenn.edu",
+    "officeHours": "Wednesday 2-5 PM in MBA Cafe"
+  }
+]

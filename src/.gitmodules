@@ -1,0 +1,27 @@
+[submodule "homeworks/HW1"]
+	path = homeworks/HW1
+	url = git@github.com:cis197/HW1.git
+[submodule "homeworks/HW2"]
+	path = homeworks/HW2
+	url = git@github.com:cis197/HW2.git
+[submodule "homeworks/HW3"]
+	path = homeworks/HW3
+	url = git@github.com:cis197/HW3.git
+[submodule "homeworks/HW4"]
+	path = homeworks/HW4
+	url = git@github.com:cis197/HW4.git
+[submodule "homeworks/campuswire-lite"]
+	path = homeworks/campuswire-lite
+	url = git@github.com:cis197/campuswire-lite.git
+# [submodule "homeworks/HW5"]
+# 	path = homeworks/HW5
+# 	url = git@github.com:cis197/HW5.git
+# [submodule "homeworks/HW6"]
+# 	path = homeworks/HW6
+# 	url = git@github.com:cis197/HW6.git
+[submodule "homeworks/HW4S"]
+	path = homeworks/HW4S
+	url = git@github.com:cis197/HW4S.git
+[submodule "homeworks/HW7"]
+	path = homeworks/HW7
+	url = git@github.com:cis197/HW7.git
