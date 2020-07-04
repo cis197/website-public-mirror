@@ -24,4 +24,11 @@ rm -rf website/LICENSE
 # Rename file to be src
 mv website src
 
-echo "Done."
+echo "Pushing to GitHub...\n"
+
+# Push to GitHub
+git add src
+git commit -m "Mirror"
+git push
+
+echo "\nDone."
